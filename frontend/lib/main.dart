@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'add_event_screen.dart';
 import 'database_helper.dart';
+import 'models/event.dart';
 
 void main() {
   runApp(const MyApp());
@@ -23,23 +24,6 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class Event {
-  final int id;
-  final String title;
-  final DateTime eventTime;
-  final String description;
-
-  Event({required this.id, required this.title, required this.eventTime, required this.description});
-
-  factory Event.fromJson(Map<String, dynamic> json) {
-    return Event(
-      id: json['id'],
-      title: json['title'],
-      eventTime: DateTime.parse(json['eventTime']),
-      description: json['description'],
-    );
-  }
-}
 
 class EventListScreen extends StatefulWidget {
   const EventListScreen({Key? key}) : super(key: key);
@@ -86,27 +70,58 @@ class _EventListScreenState extends State<EventListScreen> {
       appBar: AppBar(
         title: const Text('Events'),
       ),
-      body: Center(
-        child: FutureBuilder<List<Event>>(
-          future: futureEvents,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
+      body: RefreshIndicator(
+        onRefresh: () async {
+          setState(() {
+            futureEvents = fetchEvents();
+          });
+        },
+        child: Center(
+          child: FutureBuilder<List<Event>>(
+            future: futureEvents,
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting && snapshot.data == null) {
+                return const CircularProgressIndicator();
+              }
+              if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Text('No events found.');
+              }
               return ListView.builder(
                 itemCount: snapshot.data!.length,
                 itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(snapshot.data![index].title),
-                    subtitle: Text(snapshot.data![index].description),
-                    trailing: Text(snapshot.data![index].eventTime.toIso8601String()),
+                  final event = snapshot.data![index];
+                  return Card(
+                    margin: const EdgeInsets.all(8.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            event.title,
+                            style: Theme.of(context).textTheme.headlineMedium,
+                          ),
+                          const SizedBox(height: 8.0),
+                          Text(event.description),
+                          const SizedBox(height: 8.0),
+                          Align(
+                            alignment: Alignment.bottomRight,
+                            child: Text(
+                              '${event.eventTime.toLocal()}'.split(' ')[0],
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   );
                 },
               );
-            } else if (snapshot.hasError) {
-              return Text('${snapshot.error}');
-            }
-
-            return const CircularProgressIndicator();
-          },
+            },
+          ),
         ),
       ),
       floatingActionButton: FloatingActionButton(

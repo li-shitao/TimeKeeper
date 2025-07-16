@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
-import 'main.dart'; // Assuming Event class is in main.dart
+import 'models/event.dart';
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({Key? key}) : super(key: key);
@@ -90,17 +90,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 decoration: const InputDecoration(labelText: 'Description'),
               ),
               const SizedBox(height: 20),
-              Row(
-                children: <Widget>[
-                  Expanded(
-                    child: Text(
-                        "Selected Date: ${_selectedDate.toLocal()}".split(' ')[0]),
-                  ),
-                  TextButton(
-                    onPressed: () => _selectDate(context),
-                    child: const Text('Select date'),
-                  ),
-                ],
+              ListTile(
+                title: Text("Date: ${_selectedDate.toLocal()}".split(' ')[0]),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () => _selectDate(context),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
