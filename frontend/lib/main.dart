@@ -5,6 +5,7 @@ import 'add_event_screen.dart';
 import 'database_helper.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const MyApp());
 }
 
